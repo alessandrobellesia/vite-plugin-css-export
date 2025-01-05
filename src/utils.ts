@@ -53,11 +53,19 @@ export function isSourceDescription(
   return obj && typeof obj !== 'string' && typeof obj.code !== 'undefined'
 }
 
+export type PluginTransformHandler = (
+  this: any,
+  code: string,
+  id: string,
+  options?: {
+    ssr?: boolean
+  }
+) => Promise<TransformResult> | TransformResult
 export function getPluginTransformHandler(transform: Plugin['transform']) {
   if (typeof transform === 'function') {
-    return transform
+    return transform as PluginTransformHandler
   } else {
-    return transform.handler
+    return transform.handler as PluginTransformHandler
   }
 }
 
