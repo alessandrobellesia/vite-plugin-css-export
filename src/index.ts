@@ -6,7 +6,8 @@ import {
   clearExportNamedDeclaration,
   isSourceDescription,
   getPluginTransformHandler,
-  getCSSVirtualId
+  setPluginTransformHandler,
+  getCSSVirtualId,
 } from './utils'
 import type {
   CSSModuleOptions,
@@ -196,58 +197,59 @@ function vitePostCodeHandler(
 
 function hijackCSSPostPlugin(
   cssPostPlugin: Plugin,
-  config: ResolvedConfig,
   cssModuleOptions: CSSModuleOptions,
   parsedResultCache: Map<string, ParsedResult>,
   codeCacheMap: Map<string, string>
 ): void {
   if (cssPostPlugin.transform) {
     const _transform = getPluginTransformHandler(cssPostPlugin.transform)
-    cssPostPlugin.transform = async function (...args) {
-      const [cssCode, id, ...restArgs] = args
-      if (isCSSRequest(id) && isTransform(id)) {
-        const { isGlobalCSSModule = false } = cssModuleOptions
-        // result of vite:post
-        // this result will be modified if the conditions of vite:css-export are met.
-        let result: TransformResult = ''
-        if (cssModuleRE.test(id) || isGlobalCSSModule) {
-          result = await _transform.apply(this, ['', id, ...restArgs])
-        }
-        let jsCode
-        if (isSourceDescription(result)) {
-          jsCode = vitePostCodeHandler.call(
-            this,
-            id,
-            result.code,
-            cssModuleOptions,
-            parsedResultCache
-          )
-        } else {
-          jsCode = vitePostCodeHandler.call(
-            this,
-            id,
-            result as string,
-            cssModuleOptions,
-            parsedResultCache
-          )
-        }
-        const output = []
-        if (!inlineRE.test(id)) {
-          const cssVirtualId = getCSSVirtualId(id)
-          codeCacheMap.set(cssVirtualId, cssCode)
-          output.push(`import "${cssVirtualId}"`)
-        }
-        output.push(jsCode)
+    setPluginTransformHandler(
+      cssPostPlugin.transform,
+      async function (...args) {
+        const [cssCode, id, ...restArgs] = args
+        if (isCSSRequest(id) && isTransform(id)) {
+          const { isGlobalCSSModule = false } = cssModuleOptions
+          // result of vite:post
+          // this result will be modified if the conditions of vite:css-export are met.
+          let result: TransformResult = ''
+          if (cssModuleRE.test(id) || isGlobalCSSModule) {
+            result = await _transform.apply(this, ['', id, ...restArgs])
+          }
+          let jsCode
+          if (isSourceDescription(result)) {
+            jsCode = vitePostCodeHandler.call(
+              this,
+              id,
+              result.code,
+              cssModuleOptions,
+              parsedResultCache
+            )
+          } else {
+            jsCode = vitePostCodeHandler.call(
+              this,
+              id,
+              result as string,
+              cssModuleOptions,
+              parsedResultCache
+            )
+          }
+          const output = []
+          if (!inlineRE.test(id)) {
+            const cssVirtualId = getCSSVirtualId(id)
+            codeCacheMap.set(cssVirtualId, cssCode)
+            output.push(`import "${cssVirtualId}"`)
+          }
+          output.push(jsCode)
 
-        return {
-          code: output.join('\n'),
-          map: { mappings: '' },
-          moduleSideEffects: true
+          return {
+            code: output.join('\n'),
+            map: { mappings: '' },
+            moduleSideEffects: true
+          }
         }
-      } else {
         return await _transform.apply(this, args)
       }
-    }
+    )
   }
 }
 
@@ -271,18 +273,15 @@ export default function ViteCSSExportPlugin(
 
   const parsedResultCache = new Map<string, ParsedResult>()
   const codeCacheMap = new Map<string, string>()
-  let config
   return {
     name: pluginName,
     configResolved(resolvedConfig) {
-      config = resolvedConfig
-      const cssPostPlugin = config.plugins.find(
+      const cssPostPlugin = resolvedConfig.plugins.find(
         (item) => item.name === 'vite:css-post'
       )
       cssPostPlugin &&
         hijackCSSPostPlugin(
           cssPostPlugin,
-          config,
           cssModule,
           parsedResultCache,
           codeCacheMap
@@ -297,12 +296,12 @@ export default function ViteCSSExportPlugin(
         return id
       }
     },
-    load(id, options) {
+    load(id) {
       if (codeCacheMap.has(id)) {
         return codeCacheMap.get(id) ?? ''
       }
     },
-    async transform(code, id, _options) {
+    async transform(code, id) {
       if (isCSSRequest(id) && isTransform(id)) {
         const parsedResult = parseCode.call(this, code, propertyNameTransformer)
         // append additionalData
@@ -314,7 +313,6 @@ export default function ViteCSSExportPlugin(
           map: { mappings: '' }
         }
       }
-      return null
     }
   } as Plugin
 }

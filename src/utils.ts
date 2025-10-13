@@ -47,6 +47,7 @@ export function clearExportNamedDeclaration(
   })
   ast.body = ast.body.filter((item) => filteredNodeList.indexOf(item) === -1)
 }
+
 export function isSourceDescription(
   obj: TransformResult
 ): obj is SourceDescription {
@@ -61,11 +62,23 @@ export type PluginTransformHandler = (
     ssr?: boolean
   }
 ) => Promise<TransformResult> | TransformResult
+
 export function getPluginTransformHandler(transform: Plugin['transform']) {
   if (typeof transform === 'function') {
     return transform as PluginTransformHandler
   } else {
     return transform.handler as PluginTransformHandler
+  }
+}
+
+export function setPluginTransformHandler(
+  transform: Plugin['transform'],
+  handler: PluginTransformHandler
+) {
+  if (typeof transform === 'function') {
+    transform = handler
+  } else {
+    transform.handler = handler
   }
 }
 
