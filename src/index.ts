@@ -204,7 +204,7 @@ function hijackCSSPostPlugin(
   if (cssPostPlugin.transform) {
     const _transform = getPluginTransformHandler(cssPostPlugin.transform)
     setPluginTransformHandler(
-      cssPostPlugin.transform,
+      cssPostPlugin,
       async function (...args) {
         const [cssCode, id, ...restArgs] = args
         if (isCSSRequest(id) && isTransform(id)) {

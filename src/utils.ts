@@ -72,13 +72,13 @@ export function getPluginTransformHandler(transform: Plugin['transform']) {
 }
 
 export function setPluginTransformHandler(
-  transform: Plugin['transform'],
+  plugin: Plugin,
   handler: PluginTransformHandler
 ) {
-  if (typeof transform === 'function') {
-    transform = handler
+  if (typeof plugin.transform === 'function') {
+    plugin.transform = handler
   } else {
-    transform.handler = handler
+    plugin.transform.handler = handler
   }
 }
 
