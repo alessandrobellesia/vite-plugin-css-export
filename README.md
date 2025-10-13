@@ -16,7 +16,14 @@ Besides that, with the help of Vite, we can use `:export` in .scss, .sass, .less
 
 [How to use css pre-processors in Vite](https://vitejs.dev/guide/features.html#css-pre-processors)
 
-> Note: Please use 3.x for Vite5, 2.x for Vite4, and 1.x for Vite2 and Vite3.
+## Compatibility 🔌
+
+| Version        | Vite 2 | Vite 3 | Vite 4 | Vite 5 | Vite 6 | Vite 7 |
+| -------------- | ------ | ------ | ------ | ------ | ------ | ------ |
+| >=1.0.0 <2.0.0 | ✔️      | ✔️      | ❌      | ❌      | ❌      | ❌      |
+| >=2.0.0 <3.0.0 | ❌      | ❌      | ✔️      | ❌      | ❌      | ❌      |
+| >=3.0.0 <3.0.3 | ❌      | ❌      | ❌      | ✔️      | ✔️      | ❌      |
+| >=3.0.3        | ❌      | ❌      | ❌      | ✔️      | ✔️      | ✔️      |
 
 ## Install ❤️
 
